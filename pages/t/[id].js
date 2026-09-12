@@ -64,7 +64,7 @@ function ReceiptPicker({ tripId, receipt, onChange }) {
       <label className="text-xs px-2 py-1.5 rounded flex items-center gap-1 font-num cursor-pointer" style={{ border: "1px solid #d6d0bc", background: "#fff" }}>
         <Camera size={13} />
         {receipt ? "Cambia scontrino" : "Allega scontrino"}
-        <input type="file" accept="image/*" capture="environment" className="hidden" onChange={async (e) => {
+        <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
           const url = await uploadReceipt(tripId, file);
