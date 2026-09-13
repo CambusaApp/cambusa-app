@@ -380,7 +380,7 @@ export default function TripPage() {
               </div>
               <div className="text-xs font-num opacity-60 pt-1" style={{ borderTop: "1px dashed #d6d0bc" }}>Non è ancora in lista? Creala e aggiungila subito:</div>
               <div className="flex gap-2">
-                <input value={inlineNewName} onChange={(e) => setInlineNewName(e.target.value)} placeholder="Nome nuova voce..." className="text-sm flex-1 px-2 py-1.5 rounded outline-none" style={{ border: "1px solid #d6d0bc" }} onKeyDown={(e) => e.key === "Enter" && createAndAttachItem()} />
+                <input value={inlineNewName} onChange={(e) => setInlineNewName(e.target.value)} placeholder="Nome nuova voce..." className="text-sm flex-1 min-w-0 px-2 py-1.5 rounded outline-none" style={{ border: "1px solid #d6d0bc" }} onKeyDown={(e) => e.key === "Enter" && createAndAttachItem()} />
                 <button onClick={createAndAttachItem} className="text-xs px-3 rounded font-num" style={{ background: INK, color: PAPER }}>Aggiungi</button>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -396,7 +396,7 @@ export default function TripPage() {
           </div>
           <div className="flex items-center gap-2 mb-2">
             <span className="font-num text-sm">€</span>
-            <input autoFocus type="number" value={draftAmount} onChange={(e) => setDraftAmount(e.target.value)} placeholder="Totale scontrino" className="font-num text-sm flex-1 px-2 py-1.5 rounded outline-none" style={{ border: "1px solid #d6d0bc" }} />
+            <input autoFocus type="number" value={draftAmount} onChange={(e) => setDraftAmount(e.target.value)} placeholder="Totale scontrino" className="font-num text-sm flex-1 min-w-0 px-2 py-1.5 rounded outline-none" style={{ border: "1px solid #d6d0bc" }} />
           </div>
           <div className="mb-2"><ReceiptPicker tripId={tripId} receipt={draftReceipt} onChange={setDraftReceipt} onView={setViewingReceipt} /></div>
           <div className="text-xs font-num opacity-60 mb-1">Tra chi si divide</div>
@@ -493,7 +493,7 @@ export default function TripPage() {
               <div className="text-xs font-num opacity-60 mb-1">IMPORTO</div>
               <div className="flex items-center gap-2">
                 <span className="font-num text-2xl">€</span>
-                <input type="number" value={qAmount} onChange={(e) => setQAmount(e.target.value)} placeholder="0.00" className="font-num text-2xl flex-1 px-2 py-1 rounded outline-none bg-transparent" style={{ borderBottom: `2px solid ${INK}` }} />
+                <input type="number" value={qAmount} onChange={(e) => setQAmount(e.target.value)} placeholder="0.00" className="font-num text-2xl flex-1 min-w-0 px-2 py-1 rounded outline-none bg-transparent" style={{ borderBottom: `2px solid ${INK}` }} />
               </div>
             </div>
             <div>
@@ -555,7 +555,7 @@ export default function TripPage() {
                         <div className="mt-1 p-3 rounded flex flex-col gap-2" style={{ background: "#fff", border: "1px solid #e0dbc8" }}>
                           <div className="flex items-center gap-2">
                             <span className="font-num text-sm">€</span>
-                            <input type="number" value={editDraft.amount} onChange={(e2) => setEditDraft((d) => ({ ...d, amount: e2.target.value }))} className="font-num text-sm flex-1 px-2 py-1 rounded outline-none" style={{ border: "1px solid #d6d0bc" }} />
+                            <input type="number" value={editDraft.amount} onChange={(e2) => setEditDraft((d) => ({ ...d, amount: e2.target.value }))} className="font-num text-sm flex-1 min-w-0 px-2 py-1 rounded outline-none" style={{ border: "1px solid #d6d0bc" }} />
                           </div>
                           <div className="flex flex-wrap gap-2">{QUICK_CATEGORIES.map((c) => <button key={c} onClick={() => setEditDraft((d) => ({ ...d, category: c }))} className="text-xs px-2 py-1 rounded-full" style={{ background: editDraft.category === c ? INK : "#f0ede0", color: editDraft.category === c ? PAPER : "#2c2a22" }}>{c}</button>)}</div>
                           <div className="text-xs font-num opacity-60">Chi ha pagato</div>
@@ -632,7 +632,7 @@ export default function TripPage() {
                 <div key={c.id} className="flex items-center gap-3 p-3 rounded" style={{ background: "#fff", border: "1px solid #e0dbc8" }}>
                   <div className="w-8 h-8 rounded-full flex items-center justify-center font-log text-sm shrink-0" style={{ background: "#eae6d6" }}>{c.name[0]}</div>
                   {editingCrewId === c.id ? (
-                    <input autoFocus value={editingCrewName} onChange={(e) => setEditingCrewName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && saveRenameCrew()} className="text-sm flex-1 px-2 py-1 rounded outline-none" style={{ border: "1px solid #d6d0bc" }} />
+                    <input autoFocus value={editingCrewName} onChange={(e) => setEditingCrewName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && saveRenameCrew()} className="text-sm flex-1 min-w-0 px-2 py-1 rounded outline-none" style={{ border: "1px solid #d6d0bc" }} />
                   ) : (
                     <span className="text-sm flex-1">{c.name}</span>
                   )}
@@ -664,7 +664,7 @@ export default function TripPage() {
             )}
 
             <div className="flex items-center gap-2 mt-2 p-2 rounded" style={{ border: "1px dashed #a39c85" }}>
-              <input value={newCrewName} onChange={(e) => setNewCrewName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCrewMember()} placeholder="Nome nuova persona..." className="text-sm flex-1 px-2 py-1.5 rounded outline-none bg-transparent" />
+              <input value={newCrewName} onChange={(e) => setNewCrewName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCrewMember()} placeholder="Nome nuova persona..." className="text-sm flex-1 min-w-0 px-2 py-1.5 rounded outline-none bg-transparent" />
               <button onClick={addCrewMember} className="text-xs px-3 py-1.5 rounded-full font-num" style={{ background: INK, color: PAPER }}>Aggiungi</button>
             </div>
           </div>
