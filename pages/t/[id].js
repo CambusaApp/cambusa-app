@@ -85,6 +85,21 @@ export default function TripPage() {
   const { id: tripId } = router.query;
 
   const [trip, setTrip] = useState(null);
+  const [editingTrip, setEditingTrip] = useState(false);
+  const [tripNameDraft, setTripNameDraft] = useState("");
+  const [tripDaysDraft, setTripDaysDraft] = useState(1);
+
+  function openTripEdit() {
+    setTripNameDraft(trip.name);
+    setTripDaysDraft(trip.days);
+    setEditingTrip(true);
+  }
+  async function saveTripEdit() {
+    if (!tripNameDraft.trim()) return;
+    await supabase.from("trips").update({ name: tripNameDraft.trim(), days: parseInt(tripDaysDraft) || 1 }).eq("id", tripId);
+    setEditingTrip(false);
+    fetchAll();
+  }
   const [viewingReceipt, setViewingReceipt] = useState(null);
   const [crew, setCrew] = useState([]);
   const [items, setItems] = useState([]);
@@ -372,7 +387,34 @@ export default function TripPage() {
     <div className="min-h-screen flex flex-col" style={{ background: PAPER, color: "#2c2a22" }}>
       <div className="px-5 pt-6 pb-5" style={{ background: INK, color: PAPER }}>
         <div className="flex items-center gap-2 opacity-80 text-xs font-num tracking-wide mb-1"><Ship size={14} /> VIAGGIO</div>
-        <h1 className="font-log text-2xl" style={{ fontWeight: 600 }}>{trip.name} · {trip.days} giorni</h1>
+        {editingTrip ? (
+          <div className="flex flex-col gap-2 mt-1 mb-1">
+            <input
+              autoFocus
+              value={tripNameDraft}
+              onChange={(e) => setTripNameDraft(e.target.value)}
+              className="font-log text-lg px-2 py-1 rounded outline-none"
+              style={{ color: "#2c2a22" }}
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-num opacity-70">giorni:</span>
+              <input
+                type="number"
+                value={tripDaysDraft}
+                onChange={(e) => setTripDaysDraft(e.target.value)}
+                className="font-num text-sm px-2 py-1 rounded outline-none w-20"
+                style={{ color: "#2c2a22" }}
+              />
+              <button onClick={saveTripEdit} className="text-xs px-3 py-1.5 rounded-full font-num" style={{ background: PAPER, color: INK }}>Salva</button>
+              <button onClick={() => setEditingTrip(false)} className="p-1"><X size={16} /></button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <h1 className="font-log text-2xl" style={{ fontWeight: 600 }}>{trip.name} · {trip.days} giorni</h1>
+            <button onClick={openTripEdit} className="p-1 opacity-70"><Pencil size={16} /></button>
+          </div>
+        )}
         <div className="flex items-center gap-3 mt-2 text-sm font-num opacity-90">
           <span>{activeCrew.length} persone a bordo</span><span>·</span><span>{boughtCount}/{items.length} voci comprate</span>
         </div>
