@@ -1,25 +1,36 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { Ship, X } from "lucide-react";
+import { Ship, X, Check } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { generateTemplate } from "../lib/templateEngine";
 
 const INK = "#1f3a3a";
 const PAPER = "#f4f1e6";
+const RUST = "#8a5a2b";
 
-const TEMPLATE = (days, people) => {
-  const scale = Math.max(1, Math.round((days * people) / 8));
-  return [
-    { category: "Cibo fresco", name: "Pane", qty: `${scale * 2} pz` },
-    { category: "Cibo fresco", name: "Uova", qty: `${scale} conf.` },
-    { category: "Cibo fresco", name: "Prosciutto e formaggi", qty: `${scale} kg` },
-    { category: "Dispensa", name: "Pasta", qty: `${scale} pacchi` },
-    { category: "Dispensa", name: "Caffè", qty: "1 conf." },
-    { category: "Bevande", name: "Acqua naturale", qty: `${scale * 3} bottiglie` },
-    { category: "Bevande", name: "Vino", qty: `${scale} bottiglie` },
-    { category: "Ghiaccio", name: "Ghiaccio", qty: `${days} sacchi` },
-    { category: "Cucina", name: "Bombola gas", qty: "1 pz" },
-  ];
-};
+function ToggleRow({ label, options, value, onChange }) {
+  return (
+    <div className="mb-3">
+      <div className="text-xs font-num opacity-60 mb-1">{label}</div>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className="text-xs px-3 py-1.5 rounded-full font-num flex items-center gap-1"
+            style={{
+              background: value === opt.value ? RUST : "#fff",
+              color: value === opt.value ? PAPER : "#2c2a22",
+              border: "1px solid #e0dbc8",
+            }}
+          >
+            {value === opt.value && <Check size={11} />} {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const router = useRouter();
@@ -28,6 +39,10 @@ export default function Home() {
   const [crewNames, setCrewNames] = useState(["Io"]);
   const [newName, setNewName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showTemplateOptions, setShowTemplateOptions] = useState(false);
+  const [diet, setDiet] = useState("onnivoro");
+  const [alcohol, setAlcohol] = useState("moderazione");
+  const [location, setLocation] = useState("bordo");
 
   function addName() {
     if (!newName.trim()) return;
@@ -61,7 +76,7 @@ export default function Home() {
     }
 
     if (useTemplate) {
-      const items = TEMPLATE(tripDays, crew.length).map((i) => ({ ...i, trip_id: trip.id }));
+      const items = generateTemplate({ days: tripDays, people: crew.length, diet, alcohol, location }).map((i) => ({ ...i, trip_id: trip.id }));
       await supabase.from("items").insert(items);
     }
 
@@ -112,10 +127,48 @@ export default function Home() {
           </div>
           <div className="text-xs opacity-50 mt-1">Altri potranno unirsi in seguito con il link del viaggio.</div>
         </div>
+        {showTemplateOptions && (
+          <div className="p-3 rounded" style={{ background: "#fff", border: "1px solid #e0dbc8" }}>
+            <ToggleRow
+              label="REGIME ALIMENTARE"
+              value={diet}
+              onChange={setDiet}
+              options={[
+                { value: "onnivoro", label: "Onnivoro" },
+                { value: "vegano", label: "Vegano" },
+              ]}
+            />
+            <ToggleRow
+              label="QUANTO BERE"
+              value={alcohol}
+              onChange={setAlcohol}
+              options={[
+                { value: "moderazione", label: "Con moderazione" },
+                { value: "gusto", label: "Con gusto" },
+              ]}
+            />
+            <ToggleRow
+              label="DOVE SI MANGIA DI SOLITO"
+              value={location}
+              onChange={setLocation}
+              options={[
+                { value: "bordo", label: "Quasi sempre a bordo" },
+                { value: "misto", label: "Un po' di entrambi" },
+                { value: "terra", label: "Spesso a terra" },
+              ]}
+            />
+            <button disabled={loading} onClick={() => startTrip(true)} className="w-full py-3 rounded text-sm font-num mt-1" style={{ background: INK, color: PAPER, opacity: loading ? 0.6 : 1 }}>
+              {loading ? "Creazione..." : "Crea la lista suggerita"}
+            </button>
+          </div>
+        )}
+
         <div className="mt-2 flex flex-col gap-2">
-          <button disabled={loading} onClick={() => startTrip(true)} className="py-3 rounded text-sm font-num" style={{ background: INK, color: PAPER, opacity: loading ? 0.6 : 1 }}>
-            {loading ? "Creazione..." : "Usa un modello suggerito"}
-          </button>
+          {!showTemplateOptions && (
+            <button disabled={loading} onClick={() => setShowTemplateOptions(true)} className="py-3 rounded text-sm font-num" style={{ background: INK, color: PAPER, opacity: loading ? 0.6 : 1 }}>
+              Usa un modello suggerito
+            </button>
+          )}
           <button disabled={loading} onClick={() => startTrip(false)} className="py-3 rounded text-sm font-num" style={{ border: `1.5px solid ${INK}`, color: INK, opacity: loading ? 0.6 : 1 }}>
             Parti da una lista vuota
           </button>
