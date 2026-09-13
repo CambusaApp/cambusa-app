@@ -59,15 +59,19 @@ async function uploadReceipt(tripId, file) {
 }
 
 function ReceiptPicker({ tripId, receipt, onChange, onView }) {
+  const [uploading, setUploading] = useState(false);
   return (
     <div className="flex items-center gap-2">
-      <label className="text-xs px-2 py-1.5 rounded flex items-center gap-1 font-num cursor-pointer" style={{ border: "1px solid #d6d0bc", background: "#fff" }}>
+      <label className="text-xs px-2 py-1.5 rounded flex items-center gap-1 font-num" style={{ border: "1px solid #d6d0bc", background: uploading ? "#eae6d6" : "#fff", cursor: uploading ? "default" : "pointer", opacity: uploading ? 0.7 : 1 }}>
         <Camera size={13} />
-        {receipt ? "Cambia scontrino" : "Allega scontrino"}
-        <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+        {uploading ? "Caricamento..." : receipt ? "Cambia scontrino" : "Allega scontrino"}
+        <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={async (e) => {
+          if (uploading) return;
           const file = e.target.files?.[0];
           if (!file) return;
+          setUploading(true);
           const url = await uploadReceipt(tripId, file);
+          setUploading(false);
           if (url) onChange(url);
         }} />
       </label>
@@ -263,8 +267,11 @@ export default function TripPage() {
   function cancelPurchaseForm() {
     setPurchaseFormOpen(false); setEditingPurchaseId(null); setFormItemIds([]); setShowItemPicker(false); setInlineNewName("");
   }
+  const [savingPurchase, setSavingPurchase] = useState(false);
   async function savePurchase() {
+    if (savingPurchase) return;
     if (!draftAmount || formItemIds.length === 0 || draftParticipants.length === 0) return;
+    setSavingPurchase(true);
     if (editingPurchaseId) {
       await supabase.from("purchases").update({ amount: parseFloat(draftAmount), buyer_id: draftBuyerId, receipt_url: draftReceipt, participants: draftParticipants }).eq("id", editingPurchaseId);
       const toDetach = items.filter((i) => i.purchase_id === editingPurchaseId && !formItemIds.includes(i.id)).map((i) => i.id);
@@ -277,6 +284,7 @@ export default function TripPage() {
       setSelectedIds([]);
     }
     cancelPurchaseForm();
+    setSavingPurchase(false);
     fetchAll();
   }
   async function deletePurchase(purchaseId) {
@@ -310,11 +318,15 @@ export default function TripPage() {
   }
 
   // ---- spese al volo ----
+  const [savingQuick, setSavingQuick] = useState(false);
   async function addQuickExpense() {
+    if (savingQuick) return;
     if (!qAmount || parseFloat(qAmount) <= 0) return;
+    setSavingQuick(true);
     await supabase.from("quick_expenses").insert({ trip_id: tripId, amount: parseFloat(qAmount), category: qCategory, payer_id: qPayerId, participants: qParticipants, note: qNote, receipt_url: qReceipt });
     setQAmount(""); setQNote(""); setQReceipt(null);
     setScreen("spese");
+    setSavingQuick(false);
     fetchAll();
   }
   function openQuickEdit(entry) {
@@ -340,6 +352,13 @@ export default function TripPage() {
   async function undoSettlement(id) {
     await supabase.from("settlements").delete().eq("id", id);
     fetchAll();
+  }
+
+  const [linkCopied, setLinkCopied] = useState(false);
+  function copyTripLink() {
+    navigator.clipboard.writeText(window.location.href);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
   }
 
   if (loading) {
@@ -411,7 +430,7 @@ export default function TripPage() {
             })}
           </div>
           <div className="flex gap-2">
-            <button onClick={savePurchase} className="flex-1 text-xs py-2 rounded font-num" style={{ background: INK, color: PAPER }}>Salva</button>
+            <button onClick={savePurchase} disabled={savingPurchase} className="flex-1 text-xs py-2 rounded font-num" style={{ background: INK, color: PAPER, opacity: savingPurchase ? 0.6 : 1 }}>{savingPurchase ? "Salvataggio..." : "Salva"}</button>
             {editingPurchaseId && <button onClick={() => deletePurchase(editingPurchaseId)} className="text-xs px-3 py-2 rounded font-num" style={{ border: "1px solid #d6d0bc", color: RUST }}>Elimina</button>}
             <button onClick={cancelPurchaseForm} className="p-2"><X size={16} /></button>
           </div>
@@ -515,7 +534,7 @@ export default function TripPage() {
             </div>
             <input value={qNote} onChange={(e) => setQNote(e.target.value)} placeholder="Nota (facoltativa)" className="text-sm px-3 py-2 rounded outline-none" style={{ border: "1px solid #e0dbc8", background: "#fff" }} />
             <ReceiptPicker tripId={tripId} receipt={qReceipt} onChange={setQReceipt} onView={setViewingReceipt} />
-            <button onClick={addQuickExpense} className="py-3 rounded text-sm font-num flex items-center justify-center gap-2" style={{ background: INK, color: PAPER }}><Receipt size={16} /> Registra spesa</button>
+            <button onClick={addQuickExpense} disabled={savingQuick} className="py-3 rounded text-sm font-num flex items-center justify-center gap-2" style={{ background: INK, color: PAPER, opacity: savingQuick ? 0.6 : 1 }}><Receipt size={16} /> {savingQuick ? "Salvataggio..." : "Registra spesa"}</button>
           </div>
         )}
 
@@ -625,7 +644,7 @@ export default function TripPage() {
             <div className="text-sm opacity-60 font-log mb-1">Chiunque con questo link può unirsi in qualsiasi momento, anche a metà viaggio.</div>
             <div className="flex items-center gap-2 p-3 rounded" style={{ background: "#fff", border: "1px solid #e0dbc8" }}>
               <span className="text-xs font-num flex-1 min-w-0 truncate opacity-60">{typeof window !== "undefined" ? window.location.href : ""}</span>
-              <button onClick={() => navigator.clipboard.writeText(window.location.href)} className="text-xs px-3 py-1.5 rounded-full font-num" style={{ background: INK, color: PAPER }}>Copia link</button>
+              <button onClick={copyTripLink} className="text-xs px-3 py-1.5 rounded-full font-num flex items-center gap-1" style={{ background: linkCopied ? GREEN : INK, color: PAPER }}>{linkCopied && <Check size={13} />} {linkCopied ? "Copiato!" : "Copia link"}</button>
             </div>
             <div className="flex flex-col gap-1 mt-1">
               {activeCrew.map((c) => (
