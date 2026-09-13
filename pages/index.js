@@ -36,7 +36,7 @@ export default function Home() {
   const router = useRouter();
   const [tripName, setTripName] = useState("Il mio viaggio");
   const [tripDays, setTripDays] = useState(5);
-  const [crewNames, setCrewNames] = useState(["Io"]);
+  const [crewNames, setCrewNames] = useState([]);
   const [newName, setNewName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showTemplateOptions, setShowTemplateOptions] = useState(false);
@@ -50,15 +50,18 @@ export default function Home() {
     setNewName("");
   }
   function removeName(idx) {
-    if (crewNames.length <= 1) return;
     setCrewNames((prev) => prev.filter((_, i) => i !== idx));
   }
 
   async function startTrip(useTemplate) {
+    if (crewNames.length === 0) {
+      alert("Aggiungi almeno una persona all'equipaggio prima di continuare.");
+      return;
+    }
     setLoading(true);
     const { data: trip, error: tripErr } = await supabase
       .from("trips")
-      .insert({ name: tripName, days: tripDays })
+      .insert({ name: tripName, days: tripDays, diet, alcohol, location })
       .select()
       .single();
     if (tripErr) {
@@ -100,15 +103,16 @@ export default function Home() {
         </div>
         <div>
           <div className="text-xs font-num opacity-60 mb-1">EQUIPAGGIO INIZIALE ({crewNames.length})</div>
+          {crewNames.length === 0 && (
+            <div className="text-xs opacity-50 mb-2">Nessuno ancora — aggiungi il nome di tutti, incluso il tuo.</div>
+          )}
           <div className="flex flex-wrap gap-2 mb-2">
             {crewNames.map((n, idx) => (
               <span key={idx} className="text-xs px-2 py-1 rounded-full font-num flex items-center gap-1" style={{ background: "#eae6d6" }}>
                 {n}
-                {crewNames.length > 1 && (
-                  <button onClick={() => removeName(idx)}>
-                    <X size={11} />
-                  </button>
-                )}
+                <button onClick={() => removeName(idx)}>
+                  <X size={11} />
+                </button>
               </span>
             ))}
           </div>
@@ -165,11 +169,11 @@ export default function Home() {
 
         <div className="mt-2 flex flex-col gap-2">
           {!showTemplateOptions && (
-            <button disabled={loading} onClick={() => setShowTemplateOptions(true)} className="py-3 rounded text-sm font-num" style={{ background: INK, color: PAPER, opacity: loading ? 0.6 : 1 }}>
+            <button disabled={loading} onClick={() => setShowTemplateOptions(true)} className="py-3 rounded text-sm font-num" style={{ background: INK, color: PAPER, opacity: loading || crewNames.length === 0 ? 0.5 : 1 }}>
               Usa un modello suggerito
             </button>
           )}
-          <button disabled={loading} onClick={() => startTrip(false)} className="py-3 rounded text-sm font-num" style={{ border: `1.5px solid ${INK}`, color: INK, opacity: loading ? 0.6 : 1 }}>
+          <button disabled={loading} onClick={() => startTrip(false)} className="py-3 rounded text-sm font-num" style={{ border: `1.5px solid ${INK}`, color: INK, opacity: loading || crewNames.length === 0 ? 0.5 : 1 }}>
             Parti da una lista vuota
           </button>
         </div>
