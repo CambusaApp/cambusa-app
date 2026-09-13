@@ -315,13 +315,8 @@ export default function TripPage() {
   }
 
   // ---- voci lista ----
+  const [recalcDone, setRecalcDone] = useState(false);
   async function recalcQuantities() {
-    const ok = window.confirm(
-      "Aggiorno le quantità suggerite in base ai giorni e alle persone attuali. " +
-      "Verranno toccate solo le voci non ancora comprate che corrispondono al modello iniziale — " +
-      "quelle aggiunte a mano o già comprate restano invariate. Continuare?"
-    );
-    if (!ok) return;
     const fresh = generateTemplate({
       days: trip.days,
       people: activeCrew.length,
@@ -337,6 +332,8 @@ export default function TripPage() {
       await supabase.from("items").update({ qty: byName[it.name.trim().toLowerCase()] }).eq("id", it.id);
     }
     fetchAll();
+    setRecalcDone(true);
+    setTimeout(() => setRecalcDone(false), 2000);
   }
 
   function openAddForm() { setEditingItemId(null); setFormName(""); setFormQty(""); setFormCat(CATEGORIES[0]); setShowAddItem(true); }
@@ -509,8 +506,8 @@ export default function TripPage() {
           <div>
             {items.length === 0 && !showAddItem && <div className="text-sm opacity-50 text-center py-8">Lista vuota. Aggiungi la prima voce qui sotto.</div>}
             {items.length > 0 && (
-              <button onClick={recalcQuantities} className="w-full text-xs font-num px-3 py-2 rounded mb-2" style={{ border: "1px dashed #a39c85", color: "#57503f" }}>
-                Aggiorna quantità in base a giorni/persone attuali
+              <button onClick={recalcQuantities} className="w-full text-xs font-num px-3 py-2 rounded mb-2 flex items-center justify-center gap-1" style={{ border: `1px dashed ${recalcDone ? GREEN : "#a39c85"}`, color: recalcDone ? GREEN : "#57503f" }}>
+                {recalcDone && <Check size={13} />} {recalcDone ? "Quantità aggiornate" : "Aggiorna quantità in base a giorni/persone attuali"}
               </button>
             )}
             {boughtCount > 0 && (
