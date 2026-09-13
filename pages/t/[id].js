@@ -624,7 +624,7 @@ export default function TripPage() {
           <div className="flex flex-col gap-3">
             <div className="text-sm opacity-60 font-log mb-1">Chiunque con questo link può unirsi in qualsiasi momento, anche a metà viaggio.</div>
             <div className="flex items-center gap-2 p-3 rounded" style={{ background: "#fff", border: "1px solid #e0dbc8" }}>
-              <span className="text-xs font-num flex-1 truncate opacity-60">{typeof window !== "undefined" ? window.location.href : ""}</span>
+              <span className="text-xs font-num flex-1 min-w-0 truncate opacity-60">{typeof window !== "undefined" ? window.location.href : ""}</span>
               <button onClick={() => navigator.clipboard.writeText(window.location.href)} className="text-xs px-3 py-1.5 rounded-full font-num" style={{ background: INK, color: PAPER }}>Copia link</button>
             </div>
             <div className="flex flex-col gap-1 mt-1">
