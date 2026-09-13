@@ -5,6 +5,7 @@ import {
   Pencil, Trash2, Tag, Camera, ImageOff, RotateCcw, ShoppingCart,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import { generateTemplate } from "../../lib/templateEngine";
 
 const CATEGORIES = ["Cibo fresco", "Dispensa", "Bevande", "Ghiaccio", "Pulizie", "Cucina", "Altro"];
 const QUICK_CATEGORIES = [...CATEGORIES, "Ormeggio", "Carburante", "Pasti a terra"];
@@ -314,6 +315,30 @@ export default function TripPage() {
   }
 
   // ---- voci lista ----
+  async function recalcQuantities() {
+    const ok = window.confirm(
+      "Aggiorno le quantità suggerite in base ai giorni e alle persone attuali. " +
+      "Verranno toccate solo le voci non ancora comprate che corrispondono al modello iniziale — " +
+      "quelle aggiunte a mano o già comprate restano invariate. Continuare?"
+    );
+    if (!ok) return;
+    const fresh = generateTemplate({
+      days: trip.days,
+      people: activeCrew.length,
+      diet: trip.diet || "onnivoro",
+      alcohol: trip.alcohol || "moderazione",
+      location: trip.location || "bordo",
+    });
+    const byName = {};
+    fresh.forEach((i) => { byName[i.name.trim().toLowerCase()] = i.qty; });
+
+    const updates = items.filter((i) => !i.bought && byName[i.name.trim().toLowerCase()] && byName[i.name.trim().toLowerCase()] !== i.qty);
+    for (const it of updates) {
+      await supabase.from("items").update({ qty: byName[it.name.trim().toLowerCase()] }).eq("id", it.id);
+    }
+    fetchAll();
+  }
+
   function openAddForm() { setEditingItemId(null); setFormName(""); setFormQty(""); setFormCat(CATEGORIES[0]); setShowAddItem(true); }
   function openEditForm(item) { setEditingItemId(item.id); setFormName(item.name); setFormQty(item.qty || ""); setFormCat(item.category); setShowAddItem(true); }
   async function saveItemForm() {
@@ -483,6 +508,11 @@ export default function TripPage() {
         {screen === "lista" && (
           <div>
             {items.length === 0 && !showAddItem && <div className="text-sm opacity-50 text-center py-8">Lista vuota. Aggiungi la prima voce qui sotto.</div>}
+            {items.length > 0 && (
+              <button onClick={recalcQuantities} className="w-full text-xs font-num px-3 py-2 rounded mb-2" style={{ border: "1px dashed #a39c85", color: "#57503f" }}>
+                Aggiorna quantità in base a giorni/persone attuali
+              </button>
+            )}
             {boughtCount > 0 && (
               <button onClick={() => setShowBought((v) => !v)} className="w-full flex items-center justify-between text-xs font-num px-3 py-2 rounded mb-3" style={{ background: "#eae6d6" }}>
                 <span className="flex items-center gap-1"><Check size={13} /> {boughtCount} già comprate</span>
