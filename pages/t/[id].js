@@ -58,7 +58,7 @@ async function uploadReceipt(tripId, file) {
   return data.publicUrl;
 }
 
-function ReceiptPicker({ tripId, receipt, onChange }) {
+function ReceiptPicker({ tripId, receipt, onChange, onView }) {
   return (
     <div className="flex items-center gap-2">
       <label className="text-xs px-2 py-1.5 rounded flex items-center gap-1 font-num cursor-pointer" style={{ border: "1px solid #d6d0bc", background: "#fff" }}>
@@ -71,7 +71,7 @@ function ReceiptPicker({ tripId, receipt, onChange }) {
           if (url) onChange(url);
         }} />
       </label>
-      {receipt ? <img src={receipt} alt="scontrino" className="w-8 h-8 rounded object-cover" style={{ border: "1px solid #d6d0bc" }} /> : <ImageOff size={14} opacity={0.3} />}
+      {receipt ? <img src={receipt} alt="scontrino" onClick={() => onView && onView(receipt)} className="w-8 h-8 rounded object-cover cursor-pointer" style={{ border: "1px solid #d6d0bc" }} /> : <ImageOff size={14} opacity={0.3} />}
     </div>
   );
 }
@@ -81,6 +81,7 @@ export default function TripPage() {
   const { id: tripId } = router.query;
 
   const [trip, setTrip] = useState(null);
+  const [viewingReceipt, setViewingReceipt] = useState(null);
   const [crew, setCrew] = useState([]);
   const [items, setItems] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -397,7 +398,7 @@ export default function TripPage() {
             <span className="font-num text-sm">€</span>
             <input autoFocus type="number" value={draftAmount} onChange={(e) => setDraftAmount(e.target.value)} placeholder="Totale scontrino" className="font-num text-sm flex-1 px-2 py-1.5 rounded outline-none" style={{ border: "1px solid #d6d0bc" }} />
           </div>
-          <div className="mb-2"><ReceiptPicker tripId={tripId} receipt={draftReceipt} onChange={setDraftReceipt} /></div>
+          <div className="mb-2"><ReceiptPicker tripId={tripId} receipt={draftReceipt} onChange={setDraftReceipt} onView={setViewingReceipt} /></div>
           <div className="text-xs font-num opacity-60 mb-1">Tra chi si divide</div>
           <div className="flex flex-wrap gap-2 mb-2">
             {crew.filter((c) => !c.removed || draftParticipants.includes(c.id)).map((c) => {
@@ -449,7 +450,7 @@ export default function TripPage() {
                           </div>
                           {item.bought && purchase && (
                             <div className="flex items-center gap-2">
-                              {purchase.receipt_url && <img src={purchase.receipt_url} className="w-6 h-6 rounded object-cover" style={{ border: "1px solid #d6d0bc" }} />}
+                              {purchase.receipt_url && <img src={purchase.receipt_url} onClick={() => setViewingReceipt(purchase.receipt_url)} className="w-6 h-6 rounded object-cover cursor-pointer" style={{ border: "1px solid #d6d0bc" }} />}
                               <div className="text-right">
                                 <div className="font-num text-sm" style={{ color: RUST }}>€{purchase.amount}</div>
                                 <div className="text-xs opacity-50">{crew.find((c) => c.id === purchase.buyer_id)?.name || "Rimosso/a"} · {formatDate(new Date(purchase.created_at).getTime())}{groupCount > 1 ? ` · +${groupCount - 1} altri` : ""}</div>
@@ -513,7 +514,7 @@ export default function TripPage() {
               </div>
             </div>
             <input value={qNote} onChange={(e) => setQNote(e.target.value)} placeholder="Nota (facoltativa)" className="text-sm px-3 py-2 rounded outline-none" style={{ border: "1px solid #e0dbc8", background: "#fff" }} />
-            <ReceiptPicker tripId={tripId} receipt={qReceipt} onChange={setQReceipt} />
+            <ReceiptPicker tripId={tripId} receipt={qReceipt} onChange={setQReceipt} onView={setViewingReceipt} />
             <button onClick={addQuickExpense} className="py-3 rounded text-sm font-num flex items-center justify-center gap-2" style={{ background: INK, color: PAPER }}><Receipt size={16} /> Registra spesa</button>
           </div>
         )}
@@ -541,7 +542,7 @@ export default function TripPage() {
                   {ledger.map((e) => (
                     <div key={e.id}>
                       <div className="flex items-center gap-3 p-2.5 rounded" style={{ background: "#fff", border: "1px solid #e0dbc8" }}>
-                        {e.receipt ? <img src={e.receipt} className="w-9 h-9 rounded object-cover shrink-0" style={{ border: "1px solid #d6d0bc" }} /> : <div className="w-9 h-9 rounded flex items-center justify-center shrink-0" style={{ background: "#f0ede0" }}><Receipt size={14} opacity={0.4} /></div>}
+                        {e.receipt ? <img src={e.receipt} onClick={() => setViewingReceipt(e.receipt)} className="w-9 h-9 rounded object-cover shrink-0 cursor-pointer" style={{ border: "1px solid #d6d0bc" }} /> : <div className="w-9 h-9 rounded flex items-center justify-center shrink-0" style={{ background: "#f0ede0" }}><Receipt size={14} opacity={0.4} /></div>}
                         <div className="flex-1 min-w-0">
                           <div className="text-sm truncate">{e.note || e.category}</div>
                           <div className="text-xs font-num opacity-50">{e.category} · {crew.find((c) => c.id === e.payer)?.name || "Rimosso/a"} · {formatDate(e.createdAt)}</div>
@@ -567,7 +568,7 @@ export default function TripPage() {
                             })}
                           </div>
                           <input value={editDraft.note || ""} onChange={(e2) => setEditDraft((d) => ({ ...d, note: e2.target.value }))} placeholder="Nota" className="text-sm px-2 py-1.5 rounded outline-none" style={{ border: "1px solid #d6d0bc" }} />
-                          <ReceiptPicker tripId={tripId} receipt={editDraft.receipt} onChange={(r) => setEditDraft((d) => ({ ...d, receipt: r }))} />
+                          <ReceiptPicker tripId={tripId} receipt={editDraft.receipt} onChange={(r) => setEditDraft((d) => ({ ...d, receipt: r }))} onView={setViewingReceipt} />
                           <div className="flex gap-2 mt-1">
                             <button onClick={() => saveQuickEdit(e)} className="text-xs px-3 py-1.5 rounded font-num flex-1" style={{ background: INK, color: PAPER }}>Salva modifiche</button>
                             <button onClick={() => deleteQuickExpense(e.id)} className="text-xs px-3 py-1.5 rounded font-num" style={{ border: "1px solid #d6d0bc", color: RUST }}>Elimina</button>
@@ -677,6 +678,19 @@ export default function TripPage() {
             <button onClick={() => setSelectedIds([])} className="text-xs opacity-70">Annulla</button>
             <button onClick={beginGroupPurchase} className="text-xs px-3 py-1.5 rounded-full font-num" style={{ background: PAPER, color: INK }}>Registra acquisto →</button>
           </div>
+        </div>
+      )}
+
+      {viewingReceipt && (
+        <div
+          onClick={() => setViewingReceipt(null)}
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ background: "rgba(20, 24, 22, 0.92)" }}
+        >
+          <button onClick={() => setViewingReceipt(null)} className="absolute top-5 right-5 p-2 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }}>
+            <X size={22} color="#fff" />
+          </button>
+          <img src={viewingReceipt} alt="scontrino a schermo intero" className="max-w-[92%] max-h-[85%] object-contain rounded" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
 
