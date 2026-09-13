@@ -19,3 +19,9 @@ body {
 .font-num {
   font-family: "IBM Plex Mono", monospace;
 }
+
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
