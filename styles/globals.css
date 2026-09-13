@@ -25,3 +25,11 @@ textarea,
 select {
   font-size: 16px !important;
 }
+
+button {
+  transition: filter 0.1s ease, transform 0.1s ease;
+}
+button:active {
+  filter: brightness(0.85);
+  transform: scale(0.97);
+}
