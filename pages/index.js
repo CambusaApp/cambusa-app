@@ -103,7 +103,7 @@ export default function Home() {
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addName()}
               placeholder="Nome persona..."
-              className="text-sm flex-1 px-2 py-1.5 rounded outline-none"
+              className="text-sm flex-1 min-w-0 px-2 py-1.5 rounded outline-none"
               style={{ border: "1px solid #d6d0bc", background: "#fff" }}
             />
             <button onClick={addName} className="text-xs px-3 rounded font-num" style={{ background: INK, color: PAPER }}>
