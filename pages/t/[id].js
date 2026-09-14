@@ -338,6 +338,7 @@ export default function TripPage() {
 
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackName, setFeedbackName] = useState("");
+  const [feedbackContact, setFeedbackContact] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
@@ -349,8 +350,11 @@ export default function TripPage() {
     await supabase.from("feedback").insert({
       trip_id: tripId,
       name: feedbackName.trim() || null,
+      contact: feedbackContact.trim() || null,
       message: feedbackMessage.trim(),
     });
+
+    const looksLikeEmail = /\S+@\S+\.\S+/.test(feedbackContact.trim());
 
     try {
       await fetch("https://api.web3forms.com/submit", {
@@ -361,6 +365,8 @@ export default function TripPage() {
           subject: "Nuovo feedback da Cambusa",
           from_name: "Cambusa App",
           name: feedbackName.trim() || "Anonimo",
+          contatto: feedbackContact.trim() || "Non fornito",
+          ...(looksLikeEmail ? { email: feedbackContact.trim() } : {}),
           message: feedbackMessage.trim(),
         }),
       });
@@ -371,6 +377,7 @@ export default function TripPage() {
     setSendingFeedback(false);
     setFeedbackSent(true);
     setFeedbackName("");
+    setFeedbackContact("");
     setFeedbackMessage("");
     setTimeout(() => {
       setFeedbackSent(false);
@@ -817,6 +824,16 @@ export default function TripPage() {
                     className="text-sm px-3 py-2 rounded outline-none"
                     style={{ border: "1px solid #e0dbc8", background: "#fff" }}
                   />
+                  <div>
+                    <input
+                      value={feedbackContact}
+                      onChange={(e) => setFeedbackContact(e.target.value)}
+                      placeholder="Email o telefono (facoltativo)"
+                      className="text-sm px-3 py-2 rounded outline-none w-full"
+                      style={{ border: "1px solid #e0dbc8", background: "#fff" }}
+                    />
+                    <div className="text-xs opacity-50 mt-1">Serve solo se vuoi che ti rispondiamo — se lo lasci vuoto il messaggio resta comunque anonimo.</div>
+                  </div>
                   <textarea
                     value={feedbackMessage}
                     onChange={(e) => setFeedbackMessage(e.target.value)}
