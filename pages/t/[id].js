@@ -336,6 +336,48 @@ export default function TripPage() {
     setTimeout(() => setRecalcDone(false), 2000);
   }
 
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackName, setFeedbackName] = useState("");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [feedbackSent, setFeedbackSent] = useState(false);
+
+  async function sendFeedback() {
+    if (!feedbackMessage.trim() || sendingFeedback) return;
+    setSendingFeedback(true);
+
+    await supabase.from("feedback").insert({
+      trip_id: tripId,
+      name: feedbackName.trim() || null,
+      message: feedbackMessage.trim(),
+    });
+
+    try {
+      await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          access_key: process.env.NEXT_PUBLIC_WEB3FORMS_KEY,
+          subject: "Nuovo feedback da Cambusa",
+          from_name: "Cambusa App",
+          name: feedbackName.trim() || "Anonimo",
+          message: feedbackMessage.trim(),
+        }),
+      });
+    } catch (e) {
+      // L'email può fallire silenziosamente: il messaggio resta comunque salvato in Supabase.
+    }
+
+    setSendingFeedback(false);
+    setFeedbackSent(true);
+    setFeedbackName("");
+    setFeedbackMessage("");
+    setTimeout(() => {
+      setFeedbackSent(false);
+      setShowFeedback(false);
+    }, 2500);
+  }
+
   function openAddForm() { setEditingItemId(null); setFormName(""); setFormQty(""); setFormCat(CATEGORIES[0]); setShowAddItem(true); }
   function openEditForm(item) { setEditingItemId(item.id); setFormName(item.name); setFormQty(item.qty || ""); setFormCat(item.category); setShowAddItem(true); }
   async function saveItemForm() {
@@ -754,6 +796,45 @@ export default function TripPage() {
             <div className="flex items-center gap-2 mt-2 p-2 rounded" style={{ border: "1px dashed #a39c85" }}>
               <input value={newCrewName} onChange={(e) => setNewCrewName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCrewMember()} placeholder="Nome nuova persona..." className="text-sm flex-1 min-w-0 px-2 py-1.5 rounded outline-none bg-transparent" />
               <button onClick={addCrewMember} className="text-xs px-3 py-1.5 rounded-full font-num" style={{ background: INK, color: PAPER }}>Aggiungi</button>
+            </div>
+
+            <div className="mt-4 pt-4" style={{ borderTop: "1px dashed #d6d0bc" }}>
+              {!showFeedback ? (
+                <button onClick={() => setShowFeedback(true)} className="w-full text-sm py-3 rounded font-num" style={{ border: `1.5px solid ${INK}`, color: INK }}>
+                  💬 Hai suggerimenti? Aiutaci a migliorare
+                </button>
+              ) : feedbackSent ? (
+                <div className="text-sm text-center py-3 rounded font-num flex items-center justify-center gap-2" style={{ background: "#f0f4f0", color: GREEN }}>
+                  <Check size={16} /> Grazie, messaggio inviato!
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <div className="text-sm font-log">Raccontaci cosa non torna, o cosa ti piacerebbe vedere.</div>
+                  <input
+                    value={feedbackName}
+                    onChange={(e) => setFeedbackName(e.target.value)}
+                    placeholder="Il tuo nome (facoltativo)"
+                    className="text-sm px-3 py-2 rounded outline-none"
+                    style={{ border: "1px solid #e0dbc8", background: "#fff" }}
+                  />
+                  <textarea
+                    value={feedbackMessage}
+                    onChange={(e) => setFeedbackMessage(e.target.value)}
+                    placeholder="Il tuo messaggio..."
+                    rows={4}
+                    className="text-sm px-3 py-2 rounded outline-none"
+                    style={{ border: "1px solid #e0dbc8", background: "#fff", resize: "vertical" }}
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={sendFeedback} disabled={sendingFeedback || !feedbackMessage.trim()} className="flex-1 text-sm py-2.5 rounded font-num" style={{ background: INK, color: PAPER, opacity: sendingFeedback || !feedbackMessage.trim() ? 0.6 : 1 }}>
+                      {sendingFeedback ? "Invio..." : "Invia"}
+                    </button>
+                    <button onClick={() => setShowFeedback(false)} className="px-3 rounded" style={{ border: "1px solid #d6d0bc" }}>
+                      <X size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
