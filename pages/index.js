@@ -177,6 +177,9 @@ export default function Home() {
             Parti da una lista vuota
           </button>
         </div>
+        <div className="text-center mt-4">
+          <a href="/privacy" className="text-xs font-num underline opacity-50">Privacy</a>
+        </div>
       </div>
     </div>
   );
